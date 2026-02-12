@@ -1,237 +1,302 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rede Privada</title>
+<title>Cinema Sala</title>
 
 <style>
 body{
+font-family:Arial;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 margin:0;
-font-family:Arial, sans-serif;
-background:linear-gradient(135deg,#141e30,#243b55);
 color:white;
-}
-
-.criador{
-text-align:center;
-padding:15px;
-font-size:14px;
-background:rgba(0,0,0,0.4);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
 .container{
-width:90%;
-max-width:400px;
-margin:40px auto;
-background:#1c1c1c;
-padding:25px;
-border-radius:12px;
+background:#111;
+padding:20px;
+border-radius:15px;
+width:350px;
+box-shadow:0 0 20px rgba(0,255,200,0.3);
 }
 
-input{
+input,button{
 width:100%;
-padding:10px;
-margin:8px 0;
+padding:8px;
+margin:6px 0;
 border:none;
-border-radius:6px;
+border-radius:8px;
 }
 
 button{
-padding:10px;
-border:none;
-border-radius:6px;
 background:#00ffcc;
 font-weight:bold;
 cursor:pointer;
 }
 
-.menu{
-padding:15px;
+.link{
+color:#00ffcc;
+cursor:pointer;
+text-align:center;
+display:block;
+margin-top:10px;
+}
+
+.hidden{display:none}
+
+/* AREA SALA */
+#areaSala{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
 background:#000;
 display:flex;
-justify-content:space-between;
+flex-direction:column;
 align-items:center;
+padding:20px;
+overflow:auto;
 }
 
-.feed{
-padding:15px;
-max-width:600px;
-margin:auto;
+#player{
+width:90%;
+max-width:900px;
+margin-top:10px;
+border-radius:10px;
 }
 
-.post{
-background:#1c1c1c;
-padding:15px;
-border-radius:12px;
-margin-bottom:20px;
+/* CHAT FLUTUANTE */
+
+#chatBox{
+position:fixed;
+bottom:15px;
+right:15px;
+width:280px;
+background:#111;
+border-radius:15px;
+box-shadow:0 0 15px #00ffcc;
+overflow:hidden;
 }
 
-.hidden{display:none;}
+#chatHeader{
+background:#00ffcc;
+color:black;
+padding:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+#chatMessages{
+height:220px;
+overflow-y:auto;
+padding:10px;
+font-size:13px;
+}
+
+#chatInput{
+display:flex;
+}
+
+#chatInput input{
+flex:1;
+border-radius:0;
+}
+
+#chatInput button{
+width:70px;
+border-radius:0;
+}
+
+.minimized #chatMessages,
+.minimized #chatInput{
+display:none;
+}
 </style>
 </head>
 <body>
 
-<div class="criador">
-Criador do site: <b>Isac Santos de Freitas</b>
+<!-- CADASTRO -->
+<div class="container" id="registerBox">
+<h2>Criar Conta</h2>
+<input type="email" id="registerEmail" placeholder="Email">
+<input type="password" id="registerPassword" placeholder="Senha">
+<button onclick="registrar()">Registrar</button>
+<span class="link" onclick="mostrarLogin()">Já tem conta? Entrar</span>
 </div>
 
-<!-- LOGIN (INICIA VISÍVEL) -->
-<div class="container" id="loginBox">
+<!-- LOGIN -->
+<div class="container hidden" id="loginBox">
 <h2>Login</h2>
 <input type="email" id="loginEmail" placeholder="Email">
-<input type="password" id="loginSenha" placeholder="Senha">
+<input type="password" id="loginPassword" placeholder="Senha">
 <button onclick="login()">Entrar</button>
-
-<p onclick="mostrarCadastro()" style="cursor:pointer;color:#00ffcc;">
-Não tem conta? Criar conta
-</p>
-</div>
-
-<!-- REGISTRO -->
-<div class="container hidden" id="registerBox">
-<h2>Criar Conta</h2>
-<input type="text" id="regNome" placeholder="Seu nome">
-<input type="email" id="regEmail" placeholder="Email">
-<input type="password" id="regSenha" placeholder="Senha">
-<button onclick="registrar()">Registrar</button>
-
-<p onclick="mostrarLogin()" style="cursor:pointer;color:#00ffcc;">
-Já tem conta? Entrar
-</p>
+<span class="link" onclick="mostrarCadastro()">Criar conta</span>
 </div>
 
 <!-- AREA PRIVADA -->
-<div id="privado" class="hidden">
+<div class="container hidden" id="areaPrivada">
+<h3>Criar Sala</h3>
+<input type="text" id="nomeSala" placeholder="Nome da sala">
+<button onclick="criarSala()">Criar Sala</button>
+<p id="msgSala" style="color:lime;"></p>
 
-<div class="menu">
-<span id="userEmail"></span>
-<button onclick="logout()" style="background:red;color:white;">Sair</button>
-</div>
-
-<div class="feed">
-
-<h3>Nova Publicação</h3>
-<input type="text" id="postTexto" placeholder="Digite algo...">
-<button onclick="postar()">Postar</button>
 <hr>
 
-<div id="posts"></div>
+<h3>Entrar Sala</h3>
+<input type="text" id="codigoSala" placeholder="KEY da sala">
+<button onclick="entrarSala()">Entrar</button>
+</div>
 
+<!-- AREA SALA -->
+<div id="areaSala" class="hidden">
+<h2 id="nomeSalaView"></h2>
+
+<input type="file" id="videoGaleria" accept="video/*">
+<input type="text" id="linkVideo" placeholder="Link direto .mp4">
+
+<button onclick="carregarVideo()">Carregar Vídeo</button>
+
+<video id="player" controls></video>
+
+<br>
+<button onclick="sairSala()">Sair da Sala</button>
+</div>
+
+<!-- CHAT FLUTUANTE -->
+<div id="chatBox" class="hidden">
+<div id="chatHeader" onclick="toggleChat()"> Chat</div>
+<div id="chatMessages"></div>
+<div id="chatInput">
+<input type="text" id="msgInput" placeholder="Mensagem">
+<button onclick="enviarMsg()">Enviar</button>
 </div>
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyBjU88ftkD1CKAQ_iCFlmsbz-5rrYXKO_s",
-authDomain: "cinema-site-ca495.firebaseapp.com",
-projectId: "cinema-site-ca495",
-storageBucket: "cinema-site-ca495.firebasestorage.app",
-messagingSenderId: "795529771811",
-appId: "1:795529771811:web:9fcb0c80ada053ed51aa96"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_STORAGE",
+  messagingSenderId: "SEU_MSG_ID",
+  appId: "SEU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// TROCAR TELAS
-window.mostrarLogin = function(){
-document.getElementById("registerBox").classList.add("hidden");
-document.getElementById("loginBox").classList.remove("hidden");
+let salaAtual = null;
+
+/* LOGIN */
+
+window.mostrarLogin=()=>{registerBox.classList.add("hidden");loginBox.classList.remove("hidden")}
+window.mostrarCadastro=()=>{loginBox.classList.add("hidden");registerBox.classList.remove("hidden")}
+
+window.registrar=()=>{
+createUserWithEmailAndPassword(auth,registerEmail.value,registerPassword.value)
+.catch(e=>alert(e.message))
 }
 
-window.mostrarCadastro = function(){
-document.getElementById("loginBox").classList.add("hidden");
-document.getElementById("registerBox").classList.remove("hidden");
+window.login=()=>{
+signInWithEmailAndPassword(auth,loginEmail.value,loginPassword.value)
+.catch(e=>alert(e.message))
 }
 
-// REGISTRAR
-window.registrar = async function(){
-const email = document.getElementById("regEmail").value;
-const senha = document.getElementById("regSenha").value;
-
-try{
-await createUserWithEmailAndPassword(auth,email,senha);
-alert("Conta criada! Faça login.");
-mostrarLogin();
-}catch(e){
-alert(e.message);
-}
-}
-
-// LOGIN
-window.login = async function(){
-const email = document.getElementById("loginEmail").value;
-const senha = document.getElementById("loginSenha").value;
-
-try{
-await signInWithEmailAndPassword(auth,email,senha);
-}catch(e){
-alert("Erro: "+e.message);
-}
-}
-
-// LOGOUT
-window.logout = async function(){
-await signOut(auth);
-}
-
-// POSTAR
-window.postar = async function(){
-const texto = document.getElementById("postTexto").value;
-if(!texto) return;
-
-await addDoc(collection(db,"posts"),{
-texto:texto,
-user:auth.currentUser.email,
-data:Date.now()
-});
-
-document.getElementById("postTexto").value="";
-carregarPosts();
-}
-
-// CARREGAR POSTS
-async function carregarPosts(){
-const q = query(collection(db,"posts"),orderBy("data","desc"));
-const querySnapshot = await getDocs(q);
-
-const postsDiv = document.getElementById("posts");
-postsDiv.innerHTML="";
-
-querySnapshot.forEach((doc)=>{
-const post = doc.data();
-postsDiv.innerHTML += `
-<div class="post">
-<b>${post.user}</b>
-<p>${post.texto}</p>
-</div>
-`;
-});
-}
-
-// VERIFICAR LOGIN
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth,user=>{
 if(user){
-document.getElementById("loginBox").classList.add("hidden");
-document.getElementById("registerBox").classList.add("hidden");
-document.getElementById("privado").classList.remove("hidden");
-document.getElementById("userEmail").innerText = user.email;
-carregarPosts();
+registerBox.classList.add("hidden")
+loginBox.classList.add("hidden")
+areaPrivada.classList.remove("hidden")
 }else{
-document.getElementById("privado").classList.add("hidden");
-document.getElementById("loginBox").classList.remove("hidden");
+areaPrivada.classList.add("hidden")
+registerBox.classList.remove("hidden")
 }
-});
+})
+
+/* SALA */
+
+window.criarSala=async()=>{
+if(!nomeSala.value) return alert("Digite nome da sala")
+const key=Math.random().toString(36).substring(2,8).toUpperCase()
+await setDoc(doc(db,"salas",key),{
+nome:nomeSala.value,
+key:key
+})
+msgSala.innerText=" Sala criada! KEY: "+key
+}
+
+window.entrarSala=async()=>{
+const snap=await getDoc(doc(db,"salas",codigoSala.value))
+if(snap.exists()){
+salaAtual=codigoSala.value
+areaPrivada.classList.add("hidden")
+areaSala.classList.remove("hidden")
+chatBox.classList.remove("hidden")
+nomeSalaView.innerText="Sala: "+snap.data().nome
+iniciarChat()
+}else alert("Sala não encontrada")
+}
+
+window.sairSala=()=>{
+areaSala.classList.add("hidden")
+areaPrivada.classList.remove("hidden")
+chatBox.classList.add("hidden")
+player.src=""
+}
+
+/* VIDEO */
+
+window.carregarVideo=()=>{
+if(videoGaleria.files[0]){
+player.src=URL.createObjectURL(videoGaleria.files[0])
+player.play()
+}else if(linkVideo.value){
+player.src=linkVideo.value
+player.play()
+}else{
+alert("Coloque vídeo da galeria ou link")
+}
+}
+
+/* CHAT */
+
+window.toggleChat=()=>{
+chatBox.classList.toggle("minimized")
+}
+
+window.enviarMsg=async()=>{
+if(!msgInput.value) return
+await addDoc(collection(db,"salas",salaAtual,"chat"),{
+user:auth.currentUser.email,
+msg:msgInput.value,
+time:new Date()
+})
+msgInput.value=""
+}
+
+function iniciarChat(){
+const q=query(collection(db,"salas",salaAtual,"chat"),orderBy("time"))
+onSnapshot(q,snap=>{
+chatMessages.innerHTML=""
+snap.forEach(doc=>{
+chatMessages.innerHTML+=`<div><b>${doc.data().user}:</b> ${doc.data().msg}</div>`
+})
+chatMessages.scrollTop=chatMessages.scrollHeight
+})
+}
 
 </script>
+
 </body>
 </html>
