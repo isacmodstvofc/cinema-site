@@ -7,334 +7,218 @@
 
 <style>
 body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:linear-gradient(135deg,#141e30,#243b55);
-    color:white;
+margin:0;
+font-family:Arial, sans-serif;
+background:linear-gradient(135deg,#141e30,#243b55);
+color:white;
 }
 
 .criador{
-    text-align:center;
-    padding:15px;
-    font-size:14px;
-    background:rgba(0,0,0,0.4);
+text-align:center;
+padding:15px;
+font-size:14px;
+background:rgba(0,0,0,0.4);
 }
-
-.criador a{
-    color:#00ffcc;
-    text-decoration:none;
-    font-weight:bold;
-}
-
-.hidden{display:none;}
 
 .container{
-    width:90%;
-    max-width:400px;
-    margin:40px auto;
-    background:#1c1c1c;
-    padding:25px;
-    border-radius:12px;
+width:90%;
+max-width:400px;
+margin:40px auto;
+background:#1c1c1c;
+padding:25px;
+border-radius:12px;
 }
 
 input{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-    border:none;
-    border-radius:6px;
+width:100%;
+padding:10px;
+margin:8px 0;
+border:none;
+border-radius:6px;
 }
 
 button{
-    padding:10px;
-    border:none;
-    border-radius:6px;
-    background:#00ffcc;
-    font-weight:bold;
-    cursor:pointer;
+padding:10px;
+border:none;
+border-radius:6px;
+background:#00ffcc;
+font-weight:bold;
+cursor:pointer;
 }
 
 .menu{
-    padding:15px;
-    background:#000;
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-
-.menu img{
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    object-fit:cover;
+padding:15px;
+background:#000;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 .feed{
-    padding:15px;
-    max-width:600px;
-    margin:auto;
+padding:15px;
+max-width:600px;
+margin:auto;
 }
 
 .post{
-    background:#1c1c1c;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:20px;
+background:#1c1c1c;
+padding:15px;
+border-radius:12px;
+margin-bottom:20px;
 }
 
-.post img,.post video,.post iframe{
-    width:100%;
-    border-radius:10px;
-    margin-top:10px;
-    max-height:500px;
-}
-
-.chat-box{
-    background:#111;
-    border-radius:12px;
-    padding:10px;
-    margin-top:10px;
-    max-height:300px;
-    display:flex;
-    flex-direction:column;
-}
-
-.chat-mensagens{
-    flex:1;
-    overflow-y:auto;
-    margin-bottom:10px;
-    font-size:14px;
-}
-
-.chat-msg{
-    margin-bottom:6px;
-    padding:6px;
-    background:#1c1c1c;
-    border-radius:6px;
-}
+.hidden{display:none;}
 </style>
 </head>
 <body>
 
 <div class="criador">
-Criador do site: <b>Isac Santos de Freitas</b><br>
-Instagram: <a href="https://instagram.com/nini.vuhh" target="_blank">@nini.vuhh</a>
+Criador do site: <b>Isac Santos de Freitas</b>
 </div>
 
 <!-- REGISTRO -->
 <div class="container" id="registerBox">
 <h2>Criar Conta</h2>
 <input type="text" id="regNome" placeholder="Seu nome">
-<input type="file" id="regFoto" accept="image/*">
-<input type="text" id="regKey" placeholder="Crie sua Key">
+<input type="email" id="regEmail" placeholder="Email">
+<input type="password" id="regSenha" placeholder="Senha">
 <button onclick="registrar()">Registrar</button>
-<p>Já tem conta? 
-<span onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">Entrar</span>
-</p>
+<p onclick="mostrarLogin()" style="cursor:pointer;color:#00ffcc;">Já tem conta? Entrar</p>
 </div>
 
 <!-- LOGIN -->
 <div class="container hidden" id="loginBox">
 <h2>Login</h2>
-<input type="text" id="loginKey" placeholder="Digite sua Key">
+<input type="email" id="loginEmail" placeholder="Email">
+<input type="password" id="loginSenha" placeholder="Senha">
 <button onclick="login()">Entrar</button>
 </div>
 
 <!-- AREA PRIVADA -->
-<div class="hidden" id="privado">
+<div id="privado" class="hidden">
 
 <div class="menu">
-<img id="perfilFoto">
-<div id="perfilNome"></div>
-<button style="margin-left:auto;background:red;color:white;" onclick="logout()">Sair</button>
+<span id="userEmail"></span>
+<button onclick="logout()" style="background:red;color:white;">Sair</button>
 </div>
 
 <div class="feed">
 
 <h3>Nova Publicação</h3>
-<input type="file" id="fileInput" accept="image/*,video/*">
-<input type="text" id="linkInput" placeholder="Ou cole um link">
+<input type="text" id="postTexto" placeholder="Digite algo...">
 <button onclick="postar()">Postar</button>
 <hr>
 
 <div id="posts"></div>
 
-<h3>Chat da Sala</h3>
-<div class="chat-box">
-<div class="chat-mensagens" id="chatBox"></div>
-<input type="text" id="chatInput" placeholder="Digite mensagem">
-<button onclick="enviarMensagem()">Enviar</button>
-</div>
-
 </div>
 </div>
 
-<script>
+<script type="module">
 
-let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-let salas = JSON.parse(localStorage.getItem("salas")) || {};
-let usuarioLogado = null;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-function salvar(){
-localStorage.setItem("usuarios",JSON.stringify(usuarios));
-localStorage.setItem("salas",JSON.stringify(salas));
-}
-
-function mostrarLogin(){
-registerBox.classList.add("hidden");
-loginBox.classList.remove("hidden");
-}
-
-function registrar(){
-let nome = regNome.value.trim();
-let key = regKey.value.trim();
-let foto = regFoto.files[0];
-
-if(!nome || !key || !foto){
-alert("Preencha tudo");
-return;
-}
-
-if(usuarios.find(u=>u.key===key)){
-alert("Key já existe");
-return;
-}
-
-let reader = new FileReader();
-reader.onload = function(e){
-
-let novoUsuario = {
-nome:nome,
-key:key,
-foto:e.target.result
+const firebaseConfig = {
+apiKey: "AIzaSyBjU88ftkD1CKAQ_iCFlmsbz-5rrYXKO_s",
+authDomain: "cinema-site-ca495.firebaseapp.com",
+projectId: "cinema-site-ca495",
+storageBucket: "cinema-site-ca495.firebasestorage.app",
+messagingSenderId: "795529771811",
+appId: "1:795529771811:web:9fcb0c80ada053ed51aa96"
 };
 
-usuarios.push(novoUsuario);
-salas[key]={posts:[],chat:[]};
-salvar();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-alert("Registrado com sucesso!");
-mostrarLogin();
+// MOSTRAR LOGIN
+window.mostrarLogin = function(){
+document.getElementById("registerBox").classList.add("hidden");
+document.getElementById("loginBox").classList.remove("hidden");
 }
 
-reader.readAsDataURL(foto);
+// REGISTRAR
+window.registrar = async function(){
+const nome = document.getElementById("regNome").value;
+const email = document.getElementById("regEmail").value;
+const senha = document.getElementById("regSenha").value;
+
+try{
+await createUserWithEmailAndPassword(auth,email,senha);
+alert("Conta criada!");
+}catch(e){
+alert(e.message);
+}
 }
 
-function login(){
-let key = loginKey.value.trim();
-let usuario = usuarios.find(u=>u.key===key);
+// LOGIN
+window.login = async function(){
+const email = document.getElementById("loginEmail").value;
+const senha = document.getElementById("loginSenha").value;
 
-if(!usuario){
-alert("Key inválida");
-return;
+try{
+await signInWithEmailAndPassword(auth,email,senha);
+}catch(e){
+alert("Erro: "+e.message);
+}
 }
 
-usuarioLogado=usuario;
-
-perfilNome.innerHTML = usuario.nome + "<br><small>Rede criada por Isac Santos</small>";
-perfilFoto.src = usuario.foto;
-
-loginBox.classList.add("hidden");
-registerBox.classList.add("hidden");
-privado.classList.remove("hidden");
-
-carregarPosts();
-carregarChat();
+// LOGOUT
+window.logout = async function(){
+await signOut(auth);
 }
 
-function postar(){
-let sala = salas[usuarioLogado.key];
-let file = fileInput.files[0];
-let link = linkInput.value.trim();
-
-if(!file && !link){
-alert("Escolha arquivo ou link");
-return;
-}
-
-let conteudo={};
-
-if(file){
-conteudo.tipo = file.type.startsWith("image") ? "img":"video";
-conteudo.src = URL.createObjectURL(file);
-}
-
-if(link){
-conteudo.tipo="link";
-conteudo.src=link;
-}
-
-sala.posts.push(conteudo);
-salvar();
-carregarPosts();
-fileInput.value="";
-linkInput.value="";
-}
-
-function carregarPosts(){
-let sala = salas[usuarioLogado.key];
-posts.innerHTML="";
-
-sala.posts.slice().reverse().forEach(p=>{
-let div=document.createElement("div");
-div.className="post";
-
-if(p.tipo==="img"){
-let img=document.createElement("img");
-img.src=p.src;
-div.appendChild(img);
-}
-
-if(p.tipo==="video"){
-let video=document.createElement("video");
-video.src=p.src;
-video.controls=true;
-div.appendChild(video);
-}
-
-if(p.tipo==="link"){
-let a=document.createElement("a");
-a.href=p.src;
-a.target="_blank";
-a.style.color="#00ffcc";
-a.innerText="Abrir Link";
-div.appendChild(a);
-}
-
-posts.appendChild(div);
-});
-}
-
-function enviarMensagem(){
-let texto = chatInput.value.trim();
+// POSTAR
+window.postar = async function(){
+const texto = document.getElementById("postTexto").value;
 if(!texto) return;
 
-let sala = salas[usuarioLogado.key];
-sala.chat.push({nome:usuarioLogado.nome,texto:texto});
-salvar();
-chatInput.value="";
-carregarChat();
-}
-
-function carregarChat(){
-let sala = salas[usuarioLogado.key];
-chatBox.innerHTML="";
-
-sala.chat.forEach(msg=>{
-let div=document.createElement("div");
-div.className="chat-msg";
-div.innerHTML="<b>"+msg.nome+":</b> "+msg.texto;
-chatBox.appendChild(div);
+await addDoc(collection(db,"posts"),{
+texto:texto,
+user:auth.currentUser.email,
+data:Date.now()
 });
 
-chatBox.scrollTop=chatBox.scrollHeight;
+document.getElementById("postTexto").value="";
+carregarPosts();
 }
 
-function logout(){
-usuarioLogado=null;
-privado.classList.add("hidden");
-loginBox.classList.remove("hidden");
+// CARREGAR POSTS
+async function carregarPosts(){
+const q = query(collection(db,"posts"),orderBy("data","desc"));
+const querySnapshot = await getDocs(q);
+
+const postsDiv = document.getElementById("posts");
+postsDiv.innerHTML="";
+
+querySnapshot.forEach((doc)=>{
+const post = doc.data();
+postsDiv.innerHTML += `
+<div class="post">
+<b>${post.user}</b>
+<p>${post.texto}</p>
+</div>
+`;
+});
 }
+
+// VERIFICAR LOGIN
+onAuthStateChanged(auth,(user)=>{
+if(user){
+document.getElementById("loginBox").classList.add("hidden");
+document.getElementById("registerBox").classList.add("hidden");
+document.getElementById("privado").classList.remove("hidden");
+document.getElementById("userEmail").innerText = user.email;
+carregarPosts();
+}else{
+document.getElementById("privado").classList.add("hidden");
+document.getElementById("loginBox").classList.remove("hidden");
+}
+});
 
 </script>
 </body>
