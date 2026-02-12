@@ -76,22 +76,29 @@ margin-bottom:20px;
 Criador do site: <b>Isac Santos de Freitas</b>
 </div>
 
+<!-- LOGIN (INICIA VISÍVEL) -->
+<div class="container" id="loginBox">
+<h2>Login</h2>
+<input type="email" id="loginEmail" placeholder="Email">
+<input type="password" id="loginSenha" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+
+<p onclick="mostrarCadastro()" style="cursor:pointer;color:#00ffcc;">
+Não tem conta? Criar conta
+</p>
+</div>
+
 <!-- REGISTRO -->
-<div class="container" id="registerBox">
+<div class="container hidden" id="registerBox">
 <h2>Criar Conta</h2>
 <input type="text" id="regNome" placeholder="Seu nome">
 <input type="email" id="regEmail" placeholder="Email">
 <input type="password" id="regSenha" placeholder="Senha">
 <button onclick="registrar()">Registrar</button>
-<p onclick="mostrarLogin()" style="cursor:pointer;color:#00ffcc;">Já tem conta? Entrar</p>
-</div>
 
-<!-- LOGIN -->
-<div class="container hidden" id="loginBox">
-<h2>Login</h2>
-<input type="email" id="loginEmail" placeholder="Email">
-<input type="password" id="loginSenha" placeholder="Senha">
-<button onclick="login()">Entrar</button>
+<p onclick="mostrarLogin()" style="cursor:pointer;color:#00ffcc;">
+Já tem conta? Entrar
+</p>
 </div>
 
 <!-- AREA PRIVADA -->
@@ -135,21 +142,26 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// MOSTRAR LOGIN
+// TROCAR TELAS
 window.mostrarLogin = function(){
 document.getElementById("registerBox").classList.add("hidden");
 document.getElementById("loginBox").classList.remove("hidden");
 }
 
+window.mostrarCadastro = function(){
+document.getElementById("loginBox").classList.add("hidden");
+document.getElementById("registerBox").classList.remove("hidden");
+}
+
 // REGISTRAR
 window.registrar = async function(){
-const nome = document.getElementById("regNome").value;
 const email = document.getElementById("regEmail").value;
 const senha = document.getElementById("regSenha").value;
 
 try{
 await createUserWithEmailAndPassword(auth,email,senha);
-alert("Conta criada!");
+alert("Conta criada! Faça login.");
+mostrarLogin();
 }catch(e){
 alert(e.message);
 }
