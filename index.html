@@ -7,84 +7,77 @@
 
 <style>
 body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:linear-gradient(135deg,#141e30,#243b55);
-    color:white;
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#141e30,#243b55);
+color:white;
 }
 .hidden{display:none;}
 .container{
-    width:90%;
-    max-width:400px;
-    margin:40px auto;
-    background:#1c1c1c;
-    padding:25px;
-    border-radius:12px;
+width:90%;
+max-width:400px;
+margin:40px auto;
+background:#1c1c1c;
+padding:25px;
+border-radius:12px;
 }
-input{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-    border:none;
-    border-radius:6px;
+input,button{
+width:100%;
+padding:10px;
+margin:8px 0;
+border:none;
+border-radius:6px;
 }
 button{
-    padding:10px;
-    border:none;
-    border-radius:6px;
-    background:#00ffcc;
-    font-weight:bold;
-    cursor:pointer;
+background:#00ffcc;
+font-weight:bold;
+cursor:pointer;
 }
 .menu{
-    padding:15px;
-    background:#000;
-    display:flex;
-    align-items:center;
-    gap:10px;
+background:#000;
+padding:15px;
+display:flex;
+align-items:center;
+gap:10px;
 }
 .menu img{
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    object-fit:cover;
+width:45px;
+height:45px;
+border-radius:50%;
 }
 .feed{
-    padding:15px;
-    max-width:600px;
-    margin:auto;
+max-width:600px;
+margin:auto;
+padding:15px;
 }
 .post{
-    background:#1c1c1c;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:20px;
+background:#1c1c1c;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
 }
 .post img,.post video{
-    width:100%;
-    border-radius:10px;
-    margin-top:10px;
+width:100%;
+border-radius:10px;
 }
 .chat-box{
-    background:#111;
-    border-radius:12px;
-    padding:10px;
-    margin-top:10px;
-    max-height:300px;
-    display:flex;
-    flex-direction:column;
+background:#111;
+padding:10px;
+border-radius:12px;
+max-height:300px;
+display:flex;
+flex-direction:column;
 }
 .chat-mensagens{
-    flex:1;
-    overflow-y:auto;
-    margin-bottom:10px;
-    font-size:14px;
+flex:1;
+overflow-y:auto;
+font-size:14px;
 }
 .chat-msg{
-    margin-bottom:6px;
-    padding:6px;
-    background:#1c1c1c;
-    border-radius:6px;
+background:#1c1c1c;
+padding:6px;
+border-radius:6px;
+margin-bottom:6px;
 }
 </style>
 </head>
@@ -94,19 +87,29 @@ button{
 <div class="container" id="registerBox">
 <h2>Criar Conta</h2>
 <input type="text" id="regNome" placeholder="Seu nome">
-<input type="file" id="regFoto" accept="image/*">
-<input type="text" id="regKey" placeholder="Crie sua Key">
+<input type="email" id="regEmail" placeholder="Email">
+<input type="password" id="regSenha" placeholder="Senha">
+<input type="text" id="regKey" placeholder="Crie sua Key de Sala">
 <button onclick="registrar()">Registrar</button>
-<p>Já tem conta? 
-<span onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">Entrar</span>
+<p onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">
+Já tem conta? Entrar
 </p>
 </div>
 
 <!-- LOGIN -->
 <div class="container hidden" id="loginBox">
 <h2>Login</h2>
-<input type="text" id="loginKey" placeholder="Digite sua Key">
+<input type="email" id="loginEmail" placeholder="Email">
+<input type="password" id="loginSenha" placeholder="Senha">
 <button onclick="login()">Entrar</button>
+</div>
+
+<!-- ENTRAR SALA -->
+<div class="container hidden" id="salaBox">
+<h2>Entrar em Sala</h2>
+<input type="text" id="entrarKey" placeholder="Digite a Key da Sala">
+<button onclick="entrarSala()">Entrar</button>
+<button onclick="minhaSala()">Minha Sala</button>
 </div>
 
 <!-- AREA PRIVADA -->
@@ -119,18 +122,16 @@ button{
 </div>
 
 <div class="feed">
-
 <h3>Nova Publicação</h3>
 <input type="file" id="fileInput" accept="image/*,video/*">
 <button onclick="postar()">Postar</button>
 <hr>
-
 <div id="posts"></div>
 
-<h3>Chat da Sala</h3>
+<h3>Chat</h3>
 <div class="chat-box">
 <div class="chat-mensagens" id="chatBox"></div>
-<input type="text" id="chatInput" placeholder="Digite mensagem">
+<input type="text" id="chatInput" placeholder="Mensagem">
 <button onclick="enviarMensagem()">Enviar</button>
 </div>
 
@@ -141,96 +142,116 @@ button{
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
+getAuth, createUserWithEmailAndPassword,
+signInWithEmailAndPassword, signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import { 
 getFirestore, doc, setDoc, getDoc,
-collection, addDoc, onSnapshot
+collection, addDoc, onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "COLE_AQUI",
-  authDomain: "COLE_AQUI",
-  projectId: "COLE_AQUI",
-  storageBucket: "COLE_AQUI",
-  messagingSenderId: "COLE_AQUI",
-  appId: "COLE_AQUI"
+apiKey:"COLE_AQUI",
+authDomain:"COLE_AQUI",
+projectId:"COLE_AQUI",
+storageBucket:"COLE_AQUI",
+messagingSenderId:"COLE_AQUI",
+appId:"COLE_AQUI"
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-let usuarioLogado = null;
-let salaAtual = null;
+let usuarioLogado=null;
+let salaAtual=null;
 
-window.mostrarLogin = function(){
+window.mostrarLogin=function(){
 registerBox.classList.add("hidden");
 loginBox.classList.remove("hidden");
 }
 
 // REGISTRAR
-window.registrar = async function(){
-let nome = regNome.value.trim();
-let key = regKey.value.trim();
-let foto = regFoto.files[0];
+window.registrar=async function(){
 
-if(!nome || !key || !foto){
-alert("Preencha tudo");
-return;
-}
+let nome=regNome.value.trim();
+let email=regEmail.value.trim();
+let senha=regSenha.value.trim();
+let key=regKey.value.trim();
 
-let userRef = doc(db,"usuarios",key);
-let snap = await getDoc(userRef);
+if(!nome||!email||!senha||!key) return alert("Preencha tudo");
 
-if(snap.exists()){
-alert("Key já existe");
-return;
-}
+let keyRef=doc(db,"salas",key);
+let keySnap=await getDoc(keyRef);
+if(keySnap.exists()) return alert("Key já existe");
 
-let reader = new FileReader();
-reader.onload = async function(e){
-await setDoc(userRef,{
+let cred=await createUserWithEmailAndPassword(auth,email,senha);
+
+await setDoc(doc(db,"usuarios",cred.user.uid),{
 nome:nome,
-foto:e.target.result
+key:key,
+foto:"https://i.imgur.com/6VBx3io.png"
 });
+
+await setDoc(keyRef,{
+dono:cred.user.uid
+});
+
 alert("Conta criada!");
 mostrarLogin();
 }
-reader.readAsDataURL(foto);
-}
 
 // LOGIN
-window.login = async function(){
-let key = loginKey.value.trim();
-let userRef = doc(db,"usuarios",key);
-let snap = await getDoc(userRef);
+window.login=async function(){
 
-if(!snap.exists()){
-alert("Key inválida");
-return;
-}
+let email=loginEmail.value.trim();
+let senha=loginSenha.value.trim();
 
-usuarioLogado = snap.data();
-salaAtual = key;
+let cred=await signInWithEmailAndPassword(auth,email,senha);
+let snap=await getDoc(doc(db,"usuarios",cred.user.uid));
 
-perfilNome.innerHTML = usuarioLogado.nome;
-perfilFoto.src = usuarioLogado.foto;
+usuarioLogado=snap.data();
 
 loginBox.classList.add("hidden");
-registerBox.classList.add("hidden");
-privado.classList.remove("hidden");
+salaBox.classList.remove("hidden");
+}
 
+// MINHA SALA
+window.minhaSala=function(){
+salaAtual=usuarioLogado.key;
+abrirSala();
+}
+
+// ENTRAR SALA DE OUTRA PESSOA
+window.entrarSala=async function(){
+let key=entrarKey.value.trim();
+let snap=await getDoc(doc(db,"salas",key));
+if(!snap.exists()) return alert("Sala não existe");
+
+salaAtual=key;
+abrirSala();
+}
+
+function abrirSala(){
+salaBox.classList.add("hidden");
+privado.classList.remove("hidden");
+perfilNome.innerHTML=usuarioLogado.nome+"<br><small>Key: "+salaAtual+"</small>";
+perfilFoto.src=usuarioLogado.foto;
 carregarPosts();
 carregarChat();
 }
 
 // POSTAR
-window.postar = async function(){
-let file = fileInput.files[0];
-if(!file) return alert("Escolha um arquivo");
+window.postar=async function(){
+let file=fileInput.files[0];
+if(!file) return;
 
-let reader = new FileReader();
-reader.onload = async function(e){
+let reader=new FileReader();
+reader.onload=async function(e){
 await addDoc(collection(db,"salas",salaAtual,"posts"),{
-tipo: file.type.startsWith("image") ? "img":"video",
-src: e.target.result
+tipo:file.type.startsWith("image")?"img":"video",
+src:e.target.result
 });
 }
 reader.readAsDataURL(file);
@@ -238,10 +259,10 @@ reader.readAsDataURL(file);
 
 // CARREGAR POSTS
 function carregarPosts(){
-onSnapshot(collection(db,"salas",salaAtual,"posts"),snapshot=>{
+onSnapshot(collection(db,"salas",salaAtual,"posts"),snap=>{
 posts.innerHTML="";
-snapshot.forEach(docSnap=>{
-let p = docSnap.data();
+snap.forEach(docSnap=>{
+let p=docSnap.data();
 let div=document.createElement("div");
 div.className="post";
 
@@ -255,15 +276,14 @@ video.src=p.src;
 video.controls=true;
 div.appendChild(video);
 }
-
 posts.appendChild(div);
 });
 });
 }
 
 // CHAT
-window.enviarMensagem = async function(){
-let texto = chatInput.value.trim();
+window.enviarMensagem=async function(){
+let texto=chatInput.value.trim();
 if(!texto) return;
 
 await addDoc(collection(db,"salas",salaAtual,"chat"),{
@@ -274,26 +294,23 @@ chatInput.value="";
 }
 
 function carregarChat(){
-onSnapshot(collection(db,"salas",salaAtual,"chat"),snapshot=>{
+onSnapshot(collection(db,"salas",salaAtual,"chat"),snap=>{
 chatBox.innerHTML="";
-snapshot.forEach(docSnap=>{
+snap.forEach(docSnap=>{
 let msg=docSnap.data();
 let div=document.createElement("div");
 div.className="chat-msg";
 div.innerHTML="<b>"+msg.nome+":</b> "+msg.texto;
 chatBox.appendChild(div);
 });
-chatBox.scrollTop=chatBox.scrollHeight;
 });
 }
 
-window.logout = function(){
-usuarioLogado=null;
-privado.classList.add("hidden");
-loginBox.classList.remove("hidden");
+window.logout=async function(){
+await signOut(auth);
+location.reload();
 }
 
 </script>
-
 </body>
 </html>
