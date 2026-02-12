@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rede Privada Firebase</title>
+<title>Rede por Key</title>
 
 <style>
 body{
@@ -33,18 +33,6 @@ background:#00ffcc;
 font-weight:bold;
 cursor:pointer;
 }
-.menu{
-background:#000;
-padding:15px;
-display:flex;
-align-items:center;
-gap:10px;
-}
-.menu img{
-width:45px;
-height:45px;
-border-radius:50%;
-}
 .feed{
 max-width:600px;
 margin:auto;
@@ -56,22 +44,18 @@ padding:15px;
 border-radius:12px;
 margin-bottom:15px;
 }
-.post img,.post video{
+.post img,.post video,iframe{
 width:100%;
 border-radius:10px;
+margin-top:10px;
 }
-.chat-box{
+.chat{
 background:#111;
 padding:10px;
 border-radius:12px;
 max-height:300px;
 display:flex;
 flex-direction:column;
-}
-.chat-mensagens{
-flex:1;
-overflow-y:auto;
-font-size:14px;
 }
 .chat-msg{
 background:#1c1c1c;
@@ -86,51 +70,38 @@ margin-bottom:6px;
 <!-- REGISTRO -->
 <div class="container" id="registerBox">
 <h2>Criar Conta</h2>
-<input type="text" id="regNome" placeholder="Seu nome">
 <input type="email" id="regEmail" placeholder="Email">
 <input type="password" id="regSenha" placeholder="Senha">
-<input type="text" id="regKey" placeholder="Crie sua Key de Sala">
-<button onclick="registrar()">Registrar</button>
+<input type="text" id="regKey" placeholder="Criar Key da Sala">
+<button onclick="registrar()">Criar Conta</button>
 <p onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">
-Já tem conta? Entrar
+Já tenho conta
 </p>
 </div>
 
-<!-- LOGIN -->
+<!-- LOGIN POR KEY -->
 <div class="container hidden" id="loginBox">
-<h2>Login</h2>
-<input type="email" id="loginEmail" placeholder="Email">
-<input type="password" id="loginSenha" placeholder="Senha">
-<button onclick="login()">Entrar</button>
-</div>
-
-<!-- ENTRAR SALA -->
-<div class="container hidden" id="salaBox">
-<h2>Entrar em Sala</h2>
-<input type="text" id="entrarKey" placeholder="Digite a Key da Sala">
+<h2>Entrar na Sala</h2>
+<input type="text" id="loginKey" placeholder="Digite a Key">
 <button onclick="entrarSala()">Entrar</button>
-<button onclick="minhaSala()">Minha Sala</button>
 </div>
 
-<!-- AREA PRIVADA -->
-<div class="hidden" id="privado">
-
-<div class="menu">
-<img id="perfilFoto">
-<div id="perfilNome"></div>
-<button style="margin-left:auto;background:red;color:white;" onclick="logout()">Sair</button>
-</div>
+<!-- SALA -->
+<div class="hidden" id="sala">
 
 <div class="feed">
+
 <h3>Nova Publicação</h3>
 <input type="file" id="fileInput" accept="image/*,video/*">
+<input type="text" id="linkInput" placeholder="Ou cole link do vídeo">
 <button onclick="postar()">Postar</button>
 <hr>
+
 <div id="posts"></div>
 
-<h3>Chat</h3>
-<div class="chat-box">
-<div class="chat-mensagens" id="chatBox"></div>
+<h3>Bate-papo</h3>
+<div class="chat">
+<div id="chatBox" style="flex:1;overflow-y:auto;"></div>
 <input type="text" id="chatInput" placeholder="Mensagem">
 <button onclick="enviarMensagem()">Enviar</button>
 </div>
@@ -141,14 +112,10 @@ Já tem conta? Entrar
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-getAuth, createUserWithEmailAndPassword,
-signInWithEmailAndPassword, signOut 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { 
 getFirestore, doc, setDoc, getDoc,
-collection, addDoc, onSnapshot 
+collection, addDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -164,9 +131,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let usuarioLogado=null;
 let salaAtual=null;
 
+// MOSTRAR LOGIN
 window.mostrarLogin=function(){
 registerBox.classList.add("hidden");
 loginBox.classList.remove("hidden");
@@ -175,78 +142,57 @@ loginBox.classList.remove("hidden");
 // REGISTRAR
 window.registrar=async function(){
 
-let nome=regNome.value.trim();
 let email=regEmail.value.trim();
 let senha=regSenha.value.trim();
 let key=regKey.value.trim();
 
-if(!nome||!email||!senha||!key) return alert("Preencha tudo");
+if(!email||!senha||!key) return alert("Preencha tudo");
 
-let keyRef=doc(db,"salas",key);
-let keySnap=await getDoc(keyRef);
-if(keySnap.exists()) return alert("Key já existe");
+let salaRef=doc(db,"salas",key);
+let salaSnap=await getDoc(salaRef);
 
-let cred=await createUserWithEmailAndPassword(auth,email,senha);
+if(salaSnap.exists()) return alert("Key já existe");
 
-await setDoc(doc(db,"usuarios",cred.user.uid),{
-nome:nome,
+await createUserWithEmailAndPassword(auth,email,senha);
+
+await setDoc(salaRef,{
 key:key,
-foto:"https://i.imgur.com/6VBx3io.png"
+criadoEm:new Date()
 });
 
-await setDoc(keyRef,{
-dono:cred.user.uid
-});
-
-alert("Conta criada!");
+alert("Conta criada com sucesso!");
 mostrarLogin();
 }
 
-// LOGIN
-window.login=async function(){
-
-let email=loginEmail.value.trim();
-let senha=loginSenha.value.trim();
-
-let cred=await signInWithEmailAndPassword(auth,email,senha);
-let snap=await getDoc(doc(db,"usuarios",cred.user.uid));
-
-usuarioLogado=snap.data();
-
-loginBox.classList.add("hidden");
-salaBox.classList.remove("hidden");
-}
-
-// MINHA SALA
-window.minhaSala=function(){
-salaAtual=usuarioLogado.key;
-abrirSala();
-}
-
-// ENTRAR SALA DE OUTRA PESSOA
+// ENTRAR SALA POR KEY
 window.entrarSala=async function(){
-let key=entrarKey.value.trim();
-let snap=await getDoc(doc(db,"salas",key));
-if(!snap.exists()) return alert("Sala não existe");
+
+let key=loginKey.value.trim();
+if(!key) return;
+
+let salaRef=doc(db,"salas",key);
+let salaSnap=await getDoc(salaRef);
+
+if(!salaSnap.exists()) return alert("Sala não existe");
 
 salaAtual=key;
-abrirSala();
-}
 
-function abrirSala(){
-salaBox.classList.add("hidden");
-privado.classList.remove("hidden");
-perfilNome.innerHTML=usuarioLogado.nome+"<br><small>Key: "+salaAtual+"</small>";
-perfilFoto.src=usuarioLogado.foto;
+loginBox.classList.add("hidden");
+sala.classList.remove("hidden");
+
 carregarPosts();
 carregarChat();
 }
 
 // POSTAR
 window.postar=async function(){
-let file=fileInput.files[0];
-if(!file) return;
 
+let file=fileInput.files[0];
+let link=linkInput.value.trim();
+
+if(!file && !link) return alert("Escolha algo");
+
+if(file){
 let reader=new FileReader();
 reader.onload=async function(e){
 await addDoc(collection(db,"salas",salaAtual,"posts"),{
@@ -255,6 +201,17 @@ src:e.target.result
 });
 }
 reader.readAsDataURL(file);
+}
+
+if(link){
+await addDoc(collection(db,"salas",salaAtual,"posts"),{
+tipo:"link",
+src:link
+});
+}
+
+fileInput.value="";
+linkInput.value="";
 }
 
 // CARREGAR POSTS
@@ -270,11 +227,18 @@ if(p.tipo==="img"){
 let img=document.createElement("img");
 img.src=p.src;
 div.appendChild(img);
-}else{
+}
+if(p.tipo==="video"){
 let video=document.createElement("video");
 video.src=p.src;
 video.controls=true;
 div.appendChild(video);
+}
+if(p.tipo==="link"){
+let iframe=document.createElement("iframe");
+iframe.src=p.src;
+iframe.height="300";
+div.appendChild(iframe);
 }
 posts.appendChild(div);
 });
@@ -287,7 +251,6 @@ let texto=chatInput.value.trim();
 if(!texto) return;
 
 await addDoc(collection(db,"salas",salaAtual,"chat"),{
-nome:usuarioLogado.nome,
 texto:texto
 });
 chatInput.value="";
@@ -300,15 +263,10 @@ snap.forEach(docSnap=>{
 let msg=docSnap.data();
 let div=document.createElement("div");
 div.className="chat-msg";
-div.innerHTML="<b>"+msg.nome+":</b> "+msg.texto;
+div.innerText=msg.texto;
 chatBox.appendChild(div);
 });
 });
-}
-
-window.logout=async function(){
-await signOut(auth);
-location.reload();
 }
 
 </script>
