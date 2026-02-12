@@ -13,7 +13,6 @@ body{
     color:white;
 }
 
-/* TEXTO CRIADOR */
 .criador{
     text-align:center;
     padding:15px;
@@ -36,7 +35,6 @@ body{
     background:#1c1c1c;
     padding:25px;
     border-radius:12px;
-    box-shadow:0 0 20px rgba(0,255,200,0.3);
 }
 
 input{
@@ -54,10 +52,6 @@ button{
     background:#00ffcc;
     font-weight:bold;
     cursor:pointer;
-}
-
-button:hover{
-    opacity:0.9;
 }
 
 .menu{
@@ -86,21 +80,13 @@ button:hover{
     padding:15px;
     border-radius:12px;
     margin-bottom:20px;
-    box-shadow:0 0 10px rgba(0,0,0,0.4);
 }
 
-.post img, .post video, .post iframe{
+.post img,.post video,.post iframe{
     width:100%;
     border-radius:10px;
     margin-top:10px;
     max-height:500px;
-}
-
-/* CHAT */
-
-.chat-toggle{
-    width:100%;
-    margin-top:20px;
 }
 
 .chat-box{
@@ -126,248 +112,230 @@ button:hover{
     background:#1c1c1c;
     border-radius:6px;
 }
-
-.chat-input-area{
-    display:flex;
-    gap:5px;
-}
-
-.chat-input-area input{
-    flex:1;
-}
 </style>
 </head>
 <body>
 
-<!-- CRIADOR -->
 <div class="criador">
-    Criador do site: <b>Isac Santos de Freitas</b><br>
-    Instagram: <a href="https://instagram.com/nini.vuhh" target="_blank">@nini.vuhh</a>
+Criador do site: <b>Isac Santos de Freitas</b><br>
+Instagram: <a href="https://instagram.com/nini.vuhh" target="_blank">@nini.vuhh</a>
 </div>
 
 <!-- REGISTRO -->
 <div class="container" id="registerBox">
-    <h2>Criar Conta</h2>
-    <input type="text" id="regNome" placeholder="Seu nome">
-    <input type="file" id="regFoto" accept="image/*">
-    <input type="text" id="regKey" placeholder="Crie sua Key">
-    <button onclick="registrar()">Registrar</button>
-    <p style="text-align:center;margin-top:10px;">
-        JÃ¡ tem conta?
-        <span onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">Entrar</span>
-    </p>
+<h2>Criar Conta</h2>
+<input type="text" id="regNome" placeholder="Seu nome">
+<input type="file" id="regFoto" accept="image/*">
+<input type="text" id="regKey" placeholder="Crie sua Key">
+<button onclick="registrar()">Registrar</button>
+<p>Já tem conta? 
+<span onclick="mostrarLogin()" style="color:#00ffcc;cursor:pointer;">Entrar</span>
+</p>
 </div>
 
 <!-- LOGIN -->
 <div class="container hidden" id="loginBox">
-    <h2>Login</h2>
-    <input type="text" id="loginKey" placeholder="Digite sua Key">
-    <button onclick="login()">Entrar</button>
+<h2>Login</h2>
+<input type="text" id="loginKey" placeholder="Digite sua Key">
+<button onclick="login()">Entrar</button>
 </div>
 
 <!-- AREA PRIVADA -->
 <div class="hidden" id="privado">
 
-    <div class="menu">
-        <img id="perfilFoto">
-        <div id="perfilNome"></div>
-        <button style="margin-left:auto;background:red;color:white;" onclick="logout()">Sair</button>
-    </div>
+<div class="menu">
+<img id="perfilFoto">
+<div id="perfilNome"></div>
+<button style="margin-left:auto;background:red;color:white;" onclick="logout()">Sair</button>
+</div>
 
-    <div class="feed">
+<div class="feed">
 
-        <h3>Nova PublicaÃ§Ã£o</h3>
-        <input type="file" id="fileInput" accept="image/*,video/*">
-        <input type="text" id="linkInput" placeholder="Ou cole um link">
-        <button onclick="postar()">Postar</button>
-        <hr>
+<h3>Nova Publicação</h3>
+<input type="file" id="fileInput" accept="image/*,video/*">
+<input type="text" id="linkInput" placeholder="Ou cole um link">
+<button onclick="postar()">Postar</button>
+<hr>
 
-        <div id="posts"></div>
+<div id="posts"></div>
 
-        <button class="chat-toggle" onclick="toggleChat()">ðŸ’¬ Chat da Sala</button>
+<h3>Chat da Sala</h3>
+<div class="chat-box">
+<div class="chat-mensagens" id="chatBox"></div>
+<input type="text" id="chatInput" placeholder="Digite mensagem">
+<button onclick="enviarMensagem()">Enviar</button>
+</div>
 
-        <div class="chat-box hidden" id="chatContainer">
-            <div class="chat-mensagens" id="chatBox"></div>
-            <div class="chat-input-area">
-                <input type="text" id="chatInput" placeholder="Digite mensagem">
-                <button onclick="enviarMensagem()">Enviar</button>
-            </div>
-            <button style="background:#444;margin-top:8px;color:white;" onclick="toggleChat()">Minimizar</button>
-        </div>
-
-    </div>
-
+</div>
 </div>
 
 <script>
 
-let usuarios = [];
-let salas = {};
+let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+let salas = JSON.parse(localStorage.getItem("salas")) || {};
 let usuarioLogado = null;
 
+function salvar(){
+localStorage.setItem("usuarios",JSON.stringify(usuarios));
+localStorage.setItem("salas",JSON.stringify(salas));
+}
+
 function mostrarLogin(){
-    registerBox.classList.add("hidden");
-    loginBox.classList.remove("hidden");
+registerBox.classList.add("hidden");
+loginBox.classList.remove("hidden");
 }
 
 function registrar(){
-    let nome = regNome.value.trim();
-    let key = regKey.value.trim();
-    let foto = regFoto.files[0];
+let nome = regNome.value.trim();
+let key = regKey.value.trim();
+let foto = regFoto.files[0];
 
-    if(!nome || !key || !foto){
-        alert("Preencha tudo");
-        return;
-    }
+if(!nome || !key || !foto){
+alert("Preencha tudo");
+return;
+}
 
-    if(usuarios.find(u=>u.key === key)){
-        alert("Key jÃ¡ existe");
-        return;
-    }
+if(usuarios.find(u=>u.key===key)){
+alert("Key já existe");
+return;
+}
 
-    let fotoURL = URL.createObjectURL(foto);
-    usuarios.push({nome, key, foto: fotoURL});
-    salas[key] = {posts:[], chat:[]};
+let reader = new FileReader();
+reader.onload = function(e){
 
-    alert("Registrado com sucesso!");
+let novoUsuario = {
+nome:nome,
+key:key,
+foto:e.target.result
+};
+
+usuarios.push(novoUsuario);
+salas[key]={posts:[],chat:[]};
+salvar();
+
+alert("Registrado com sucesso!");
+mostrarLogin();
+}
+
+reader.readAsDataURL(foto);
 }
 
 function login(){
-    let key = loginKey.value.trim();
-    let usuario = usuarios.find(u=>u.key === key);
+let key = loginKey.value.trim();
+let usuario = usuarios.find(u=>u.key===key);
 
-    if(!usuario){
-        alert("Key invÃ¡lida");
-        return;
-    }
+if(!usuario){
+alert("Key inválida");
+return;
+}
 
-    usuarioLogado = usuario;
+usuarioLogado=usuario;
 
-    perfilNome.innerText = usuario.nome;
-    perfilFoto.src = usuario.foto;
+perfilNome.innerHTML = usuario.nome + "<br><small>Rede criada por Isac Santos</small>";
+perfilFoto.src = usuario.foto;
 
-    loginBox.classList.add("hidden");
-    registerBox.classList.add("hidden");
-    privado.classList.remove("hidden");
+loginBox.classList.add("hidden");
+registerBox.classList.add("hidden");
+privado.classList.remove("hidden");
 
-    carregarPosts();
-    carregarChat();
+carregarPosts();
+carregarChat();
 }
 
 function postar(){
-    let sala = salas[usuarioLogado.key];
-    let file = fileInput.files[0];
-    let link = linkInput.value.trim();
+let sala = salas[usuarioLogado.key];
+let file = fileInput.files[0];
+let link = linkInput.value.trim();
 
-    if(!file && !link){
-        alert("Escolha arquivo ou link");
-        return;
-    }
+if(!file && !link){
+alert("Escolha arquivo ou link");
+return;
+}
 
-    let conteudo = {};
+let conteudo={};
 
-    if(file){
-        conteudo.tipo = file.type.startsWith("image") ? "img" : "video";
-        conteudo.src = URL.createObjectURL(file);
-    }
+if(file){
+conteudo.tipo = file.type.startsWith("image") ? "img":"video";
+conteudo.src = URL.createObjectURL(file);
+}
 
-    if(link){
-        if(link.includes("youtube.com") || link.includes("youtu.be")){
-            let videoId = link.includes("watch?v=") 
-                ? link.split("watch?v=")[1].split("&")[0]
-                : link.split("youtu.be/")[1].split("?")[0];
+if(link){
+conteudo.tipo="link";
+conteudo.src=link;
+}
 
-            conteudo.tipo = "youtube";
-            conteudo.src = "https://www.youtube.com/embed/" + videoId;
-        } else {
-            conteudo.tipo = "link";
-            conteudo.src = link;
-        }
-    }
-
-    sala.posts.push(conteudo);
-    carregarPosts();
-    fileInput.value="";
-    linkInput.value="";
+sala.posts.push(conteudo);
+salvar();
+carregarPosts();
+fileInput.value="";
+linkInput.value="";
 }
 
 function carregarPosts(){
-    let sala = salas[usuarioLogado.key];
-    posts.innerHTML="";
+let sala = salas[usuarioLogado.key];
+posts.innerHTML="";
 
-    sala.posts.slice().reverse().forEach(p=>{
-        let div=document.createElement("div");
-        div.className="post";
+sala.posts.slice().reverse().forEach(p=>{
+let div=document.createElement("div");
+div.className="post";
 
-        if(p.tipo==="img"){
-            let img=document.createElement("img");
-            img.src=p.src;
-            div.appendChild(img);
-        }
-
-        if(p.tipo==="video"){
-            let video=document.createElement("video");
-            video.src=p.src;
-            video.controls=true;
-            div.appendChild(video);
-        }
-
-        if(p.tipo==="youtube"){
-            let iframe=document.createElement("iframe");
-            iframe.src=p.src;
-            iframe.height="300";
-            iframe.allowFullscreen=true;
-            div.appendChild(iframe);
-        }
-
-        if(p.tipo==="link"){
-            let a=document.createElement("a");
-            a.href=p.src;
-            a.target="_blank";
-            a.style.color="#00ffcc";
-            a.innerText="Abrir Link";
-            div.appendChild(a);
-        }
-
-        posts.appendChild(div);
-    });
+if(p.tipo==="img"){
+let img=document.createElement("img");
+img.src=p.src;
+div.appendChild(img);
 }
 
-function toggleChat(){
-    chatContainer.classList.toggle("hidden");
+if(p.tipo==="video"){
+let video=document.createElement("video");
+video.src=p.src;
+video.controls=true;
+div.appendChild(video);
+}
+
+if(p.tipo==="link"){
+let a=document.createElement("a");
+a.href=p.src;
+a.target="_blank";
+a.style.color="#00ffcc";
+a.innerText="Abrir Link";
+div.appendChild(a);
+}
+
+posts.appendChild(div);
+});
 }
 
 function enviarMensagem(){
-    let texto = chatInput.value.trim();
-    if(!texto) return;
+let texto = chatInput.value.trim();
+if(!texto) return;
 
-    let sala = salas[usuarioLogado.key];
-    sala.chat.push({nome: usuarioLogado.nome, texto: texto});
-    chatInput.value="";
-    carregarChat();
+let sala = salas[usuarioLogado.key];
+sala.chat.push({nome:usuarioLogado.nome,texto:texto});
+salvar();
+chatInput.value="";
+carregarChat();
 }
 
 function carregarChat(){
-    let sala = salas[usuarioLogado.key];
-    chatBox.innerHTML="";
+let sala = salas[usuarioLogado.key];
+chatBox.innerHTML="";
 
-    sala.chat.forEach(msg=>{
-        let div=document.createElement("div");
-        div.className="chat-msg";
-        div.innerHTML="<b>"+msg.nome+":</b> "+msg.texto;
-        chatBox.appendChild(div);
-    });
+sala.chat.forEach(msg=>{
+let div=document.createElement("div");
+div.className="chat-msg";
+div.innerHTML="<b>"+msg.nome+":</b> "+msg.texto;
+chatBox.appendChild(div);
+});
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+chatBox.scrollTop=chatBox.scrollHeight;
 }
 
 function logout(){
-    usuarioLogado=null;
-    privado.classList.add("hidden");
-    loginBox.classList.remove("hidden");
+usuarioLogado=null;
+privado.classList.add("hidden");
+loginBox.classList.remove("hidden");
 }
 
 </script>
-
 </body>
 </html>
